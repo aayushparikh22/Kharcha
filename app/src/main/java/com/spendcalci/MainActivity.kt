@@ -59,6 +59,7 @@ private enum class Tab(val title: String, val icon: String) {
     Owes("Owes", "🤝"),
     Trends("Trends", "📈"),
     Unlabelled("Unlabelled", "🏷️"),
+    Updates("Updates", "🔄"),
 }
 
 @Composable
@@ -78,6 +79,7 @@ private fun App(dao: TxnDao, settings: SettingsDao) {
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) { TimeFix.applyIfPresent(ctx) }
         perms.launch(arrayOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.POST_NOTIFICATIONS))
+        UpdateCenter.check(silent = true)
     }
 
     val monthTxns = remember(all, month) { all.filter { it.ym() == month } }
@@ -113,9 +115,14 @@ private fun App(dao: TxnDao, settings: SettingsDao) {
                     NavigationBarItem(
                         selected = tab == i, onClick = { tab = i },
                         icon = {
-                            BadgedBox(badge = { if (t == Tab.Unlabelled && pending > 0) Badge { Text("$pending") } }) { Text(t.icon) }
+                            BadgedBox(badge = {
+                                when {
+                                    t == Tab.Unlabelled && pending > 0 -> Badge { Text("$pending") }
+                                    t == Tab.Updates && UpdateCenter.updateAvailable -> Badge()
+                                }
+                            }) { Text(t.icon) }
                         },
-                        label = { Text(t.title, fontSize = 11.sp) },
+                        label = { Text(t.title, fontSize = 10.sp, maxLines = 1, softWrap = false) },
                         colors = NavigationBarItemDefaults.colors(indicatorColor = Panel2),
                     )
                 }
@@ -136,6 +143,7 @@ private fun App(dao: TxnDao, settings: SettingsDao) {
                 Tab.Owes -> DebtsScreen(all, dao)
                 Tab.Trends -> Trends(all)
                 Tab.Unlabelled -> Unlabelled(pendingList, dao)
+                Tab.Updates -> UpdatesScreen()
             }
         }
     }
