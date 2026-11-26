@@ -58,7 +58,7 @@ private enum class Tab(val title: String, val icon: String) {
     Activity("Activity", "🧾"),
     Owes("Owes", "🤝"),
     Trends("Trends", "📈"),
-    Unlabelled("Unlabelled", "🏷️"),
+    Unlabelled("Pending", "🏷️"),
     Updates("Updates", "🔄"),
 }
 
