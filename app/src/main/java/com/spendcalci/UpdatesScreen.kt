@@ -97,9 +97,7 @@ private fun UpdateStatus(ctx: android.content.Context, progress: Float?) {
                 Button(
                     onClick = { UpdateCenter.downloadAndInstall(ctx) },
                     modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(if (Updater.canInstallPackages(ctx)) "Download & install" else "Allow installs, then update")
-                }
+                ) { Text("Download & install") }
                 Spacer(Modifier.height(6.dp))
                 Text(
                     "Android will ask you to confirm. Your data is kept.",

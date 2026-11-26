@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -199,6 +200,7 @@ object UpdateCenter {
         val m = manifest ?: return
         if (progress.value != null) return
         if (!Updater.canInstallPackages(ctx)) {
+            Toast.makeText(ctx, "Allow installs from Kharcha, then tap again", Toast.LENGTH_LONG).show()
             Updater.openInstallPermission(ctx)
             return
         }
