@@ -1,0 +1,21 @@
+# Build output and caches
+build/
+app/build/
+.gradle/
+.kotlin/
+*.iml
+.idea/
+
+# Machine-specific
+local.properties
+
+# Signing material
+*.jks
+*.keystore
+
+# Personal screenshots that live in the project folder
+WhatsApp Image *.jpeg
+
+# OS junk
+Thumbs.db
+.DS_Store
