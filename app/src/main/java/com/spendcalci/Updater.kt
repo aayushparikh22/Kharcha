@@ -30,13 +30,13 @@ object Updater {
     private const val OWNER = "aayushparikh22"
     private const val REPO = "Kharcha"
     private const val BRANCH = "main"
-    private const val RAW = "https://raw.githubusercontent.com/$OWNER/$REPO/$BRANCH/"
+    private const val RAW = "https://raw.githubusercontent.com/$OWNER/$REPO/"
     private const val API = "https://api.github.com/repos/$OWNER/$REPO"
     const val REPO_URL = "https://github.com/$OWNER/$REPO"
     private const val MANIFEST_PATH = "updates/latest.json"
 
     data class Manifest(val versionName: String, val notes: String, val apkUrl: String)
-    data class Push(val message: String, val date: String)
+    data class Push(val sha: String, val message: String, val date: String)
 
     fun installedVersion(ctx: Context): String =
         ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: "0"
@@ -56,12 +56,13 @@ object Updater {
     private fun versionParts(v: String): List<Int> = v.trim().removePrefix("v").removePrefix("V")
         .split('.', '-').map { part -> part.takeWhile(Char::isDigit).toIntOrNull() ?: 0 }
 
-    suspend fun fetchManifest(): Manifest = withContext(Dispatchers.IO) {
-        val json = JSONObject(httpGet("$RAW$MANIFEST_PATH?t=${System.currentTimeMillis()}"))
+    /** [ref] is a commit SHA (preferred, never stale) or a branch name as a fallback. */
+    suspend fun fetchManifest(ref: String): Manifest = withContext(Dispatchers.IO) {
+        val json = JSONObject(httpGet("$RAW$ref/$MANIFEST_PATH"))
         Manifest(
             versionName = json.getString("versionName"),
             notes = json.optString("notes"),
-            apkUrl = RAW + json.getString("apk"),
+            apkUrl = "$RAW$ref/" + json.getString("apk"),
         )
     }
 
@@ -70,6 +71,7 @@ object Updater {
             val commit = JSONArray(httpGet("$API/commits?sha=$BRANCH&per_page=1")).getJSONObject(0)
             val info = commit.getJSONObject("commit")
             Push(
+                sha = commit.getString("sha"),
                 message = info.getString("message").lineSequence().first(),
                 date = info.getJSONObject("committer").getString("date"),
             )
@@ -177,9 +179,10 @@ object UpdateCenter {
         if (checking) return
         checking = true
         scope.launch {
-            push = Updater.fetchLatestPush() ?: push
+            val latest = Updater.fetchLatestPush()
+            if (latest != null) push = latest
             try {
-                manifest = Updater.fetchManifest()
+                manifest = Updater.fetchManifest(latest?.sha ?: "main")
                 error = null
                 notice = null
             } catch (e: FileNotFoundException) {
